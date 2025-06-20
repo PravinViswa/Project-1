@@ -3,20 +3,62 @@
 <head>
   <meta charset="UTF-8">
   <title>Age Calculator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 50px;
+      text-align: center;
+      background: #f2f2f2;
+    }
+    input[type="date"] {
+      padding: 10px;
+      font-size: 16px;
+      margin: 20px 0;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    #result {
+      margin-top: 20px;
+      font-size: 18px;
+      color: #333;
+    }
+  </style>
 </head>
 <body>
-  <h2>Age Calculator</h2>
-  <input type="date" id="dob" />
-  <button onclick="calc()">Go</button>
-  <p id="result"></p>
+  <h1>🧮 Age Calculator</h1>
+  <p>Select your Date of Birth:</p>
+  <input type="date" id="dob">
+  <br>
+  <button onclick="calculateAge()">Calculate</button>
+
+  <div id="result"></div>
 
   <script>
-    async function calc() {
+    async function calculateAge() {
       const dob = document.getElementById("dob").value;
-      const res = await fetch(`https://project-1-ifvd.onrender.com/calculate-age?dob=${dob}`);
-      const data = await res.json();
-      document.getElementById("result").innerText =
-        `Age: ${data.years} years, ${data.months} months, ${data.days} days`;
+      if (!dob) {
+        alert("Please select your date of birth!");
+        return;
+      }
+
+      try {
+        const res = await fetch(`https://project-1-ifvd.onrender.com/calculate-age?dob=${dob}`);
+        const age = await res.text();
+        document.getElementById("result").innerText = `🎉 Your Age is: ${age}`;
+      } catch (error) {
+        document.getElementById("result").innerText = "Error fetching age 😥";
+        console.error(error);
+      }
     }
   </script>
 </body>
