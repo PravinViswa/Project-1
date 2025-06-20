@@ -2,101 +2,118 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Live Age Calculator</title>
+  <title>Age Calculator</title>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
+      background: #f0f8ff;
+      color: #333;
       text-align: center;
-      background: #f4f4f4;
-      padding: 50px;
+      padding: 50px 20px;
     }
     h1 {
-      font-size: 32px;
+      font-size: 2.5rem;
+      margin-bottom: 20px;
     }
     input[type="date"] {
       padding: 10px;
       font-size: 16px;
-      margin: 20px 0;
+      border: 1px solid #aaa;
+      border-radius: 5px;
     }
     button {
       padding: 10px 20px;
       font-size: 16px;
-      background: #007bff;
-      color: white;
+      margin-top: 15px;
+      background-color: #28a745;
       border: none;
-      border-radius: 6px;
+      color: white;
+      border-radius: 5px;
       cursor: pointer;
     }
     button:hover {
-      background: #0056b3;
+      background-color: #218838;
     }
     #result {
       margin-top: 30px;
-      font-size: 20px;
-      color: #333;
+      font-size: 1.2rem;
+    }
+    .fun-text {
+      font-style: italic;
+      color: #666;
+      margin-top: 10px;
     }
   </style>
 </head>
 <body>
+  <h1>🧮 Age Calculator</h1>
+  <p>Pick your birthdate and let the magic unfold:</p>
+  <input type="date" id="dob" />
+  <br />
+  <button onclick="calculateAge()">Calculate</button>
 
-  <h1>🎉 Live Age Calculator</h1>
-  <p>Select your Date of Birth:</p>
-  <input type="date" id="dob">
-  <br>
-  <button onclick="startCalculating()">Calculate</button>
-
-  <div id="result">⏳ Waiting for DOB...</div>
+  <div id="result">👶 Pick your birthdate to see how long you’ve been rocking this reality!</div>
+  <p class="fun-text" id="funnyLine"></p>
 
   <script>
-    let intervalId;
+    let ageData = null;
+    let interval;
 
-    function startCalculating() {
+    function calculateAge() {
       const dob = document.getElementById("dob").value;
       if (!dob) {
-        alert("Please select your date of birth!");
+        alert("Oops! You gotta pick a date before I can blow your mind 🤯");
         return;
       }
 
-      clearInterval(intervalId); // Clear any existing timer
-      calculateAndStartTimer(new Date(dob));
+      document.getElementById("result").innerText = "🔍 Crunching the numbers... hang tight!";
+      document.getElementById("funnyLine").innerText = "";
+
+      fetch(`https://project-1-ifvd.onrender.com/calculate-age?dob=${dob}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.error) {
+            document.getElementById("result").innerText = "😵 Invalid date format. Try again!";
+          } else {
+            ageData = {
+              birthDate: new Date(dob),
+              ...data
+            };
+            if (interval) clearInterval(interval);
+            updateAgeLive();
+            interval = setInterval(updateAgeLive, 1000);
+
+            document.getElementById("funnyLine").innerText =
+              "🧠 That’s a whole lotta time spent dodging responsibilities and powering through Mondays!";
+          }
+        })
+        .catch(err => {
+          document.getElementById("result").innerText = "😵 Uh-oh! Something broke. Try again later.";
+          console.error(err);
+        });
     }
 
-    function calculateAndStartTimer(dobDate) {
-      function update() {
-        const now = new Date();
-        let diff = now - dobDate;
+    function updateAgeLive() {
+      if (!ageData || !ageData.birthDate) return;
 
-        if (diff < 0) {
-          document.getElementById("result").innerText = "You haven't been born yet 🥲";
-          return;
-        }
+      const now = new Date();
+      const diff = now - new Date(ageData.birthDate);
+      const seconds = Math.floor(diff / 1000);
+      const minutes = Math.floor(seconds / 60);
+      const hours = Math.floor(minutes / 60);
+      const days = Math.floor(hours / 24);
+      const months = ageData.months;
+      const years = ageData.years;
 
-        const seconds = Math.floor(diff / 1000);
-        const minutes = Math.floor(seconds / 60);
-        const hours = Math.floor(minutes / 60);
-        const days = Math.floor(hours / 24);
+      const liveSeconds = seconds % 60;
+      const liveMinutes = minutes % 60;
+      const liveHours = hours % 24;
 
-        const years = Math.floor(days / 365.25);
-        const months = Math.floor((days % 365.25) / 30.44);
-        const remainingDays = Math.floor((days % 365.25) % 30.44);
-        const remainingHours = hours % 24;
-        const remainingMinutes = minutes % 60;
-        const remainingSeconds = seconds % 60;
-
-        document.getElementById("result").innerText = `
-        ⏱️ You have survived:
-        ${years} years,
-        ${months} months,
-        ${remainingDays} days,
-        ${remainingHours} hours,
-        ${remainingMinutes} minutes,
-        ${remainingSeconds} seconds.`;
-      }
-
-      update(); // Initial call
-      intervalId = setInterval(update, 1000);
+      document.getElementById("result").innerHTML =
+        `🎉 You’ve survived <strong>${years}</strong> years, <strong>${months}</strong> months, 
+        <strong>${days % 30}</strong> days, <strong>${liveHours}</strong> hours, 
+        <strong>${liveMinutes}</strong> minutes, <strong>${liveSeconds}</strong> seconds!`;
     }
   </script>
-
 </body>
 </html>
