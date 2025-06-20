@@ -16,7 +16,7 @@
   <script>
     async function calculateAge() {
       const dob = document.getElementById('dob').value;
-      const res = await fetch(`https://your-app-name.onrender.com/calculate-age?dob=${dob}`);
+     const res = await fetch(`https://project-1-ifvd.onrender.com/calculate-age?dob=${dob}`);
       const data = await res.json();
       
       if (data.error) {
