@@ -1,39 +1,48 @@
-package com.pravin.agecalculator.controller;
+package com.pravinviswa.agecalculator;
 
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+
 import java.time.*;
 import java.time.format.DateTimeParseException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
-@CrossOrigin(origins = "https://pravinviswa.github.io")
 @RestController
+@RequestMapping("/api")
+@CrossOrigin(origins = "https://pravinviswa.github.io") 
 public class AgeController {
 
     @GetMapping("/calculate-age")
-    public Map<String, Object> calculateAge(@RequestParam String dob, @RequestParam(required = false) String timezone) {
+    public Map<String, Object> calculateAge(
+            @RequestParam String dob,
+            @RequestParam(required = false) String timezone) {
+
         Map<String, Object> response = new HashMap<>();
 
         try {
             LocalDate birthDate = LocalDate.parse(dob);
-
-            //To Use timezone if sent from frontend, fallback to UTC
-            ZoneId zone = (timezone != null && !timezone.isEmpty()) ? ZoneId.of(timezone) : ZoneOffset.UTC;
-            LocalDate today = LocalDate.now(zone);
-            Period age = Period.between(birthDate, today);
-
-            response.put("years", age.getYears());
-            response.put("months", age.getMonths());
-            response.put("days", age.getDays());
-            response.put("timezone", zone.toString());
+            ZoneId userZone = (timezone != null && !timezone.isEmpty()) ? ZoneId.of(timezone) : ZoneId.of("UTC");
+            LocalDate today = ZonedDateTime.now(userZone).toLocalDate();
 
             if (birthDate.isAfter(today)) {
-                response.put("status", "future");
+                Period until = Period.between(today, birthDate);
+                response.put("notBornYet", true);
+                response.put("years", until.getYears());
+                response.put("months", until.getMonths());
+                response.put("days", until.getDays());
             } else {
-                response.put("status", "valid");
+                Period age = Period.between(birthDate, today);
+                response.put("notBornYet", false);
+                response.put("years", age.getYears());
+                response.put("months", age.getMonths());
+                response.put("days", age.getDays());
             }
 
-        } catch (DateTimeParseException | DateTimeException e) {
-            response.put("error", "Invalid date or timezone. Format: yyyy-mm-dd, e.g. 2000-01-01");
+            response.put("timezone", userZone.toString());
+
+        } catch (DateTimeParseException e) {
+            response.put("error", "Invalid date format. Use yyyy-mm-dd");
         }
 
         return response;
