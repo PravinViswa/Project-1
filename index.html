@@ -2,13 +2,16 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Age Calculator</title>
+  <title>Live Age Calculator</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      padding: 50px;
+      font-family: 'Segoe UI', sans-serif;
       text-align: center;
-      background: #f2f2f2;
+      background: #f4f4f4;
+      padding: 50px;
+    }
+    h1 {
+      font-size: 32px;
     }
     input[type="date"] {
       padding: 10px;
@@ -21,45 +24,79 @@
       background: #007bff;
       color: white;
       border: none;
-      border-radius: 5px;
+      border-radius: 6px;
       cursor: pointer;
     }
     button:hover {
       background: #0056b3;
     }
     #result {
-      margin-top: 20px;
-      font-size: 18px;
+      margin-top: 30px;
+      font-size: 20px;
       color: #333;
     }
   </style>
 </head>
 <body>
-  <h1>🧮 Age Calculator</h1>
+
+  <h1>🎉 Live Age Calculator</h1>
   <p>Select your Date of Birth:</p>
   <input type="date" id="dob">
   <br>
-  <button onclick="calculateAge()">Calculate</button>
+  <button onclick="startCalculating()">Calculate</button>
 
-  <div id="result"></div>
+  <div id="result">⏳ Waiting for DOB...</div>
 
   <script>
-    async function calculateAge() {
+    let intervalId;
+
+    function startCalculating() {
       const dob = document.getElementById("dob").value;
       if (!dob) {
         alert("Please select your date of birth!");
         return;
       }
 
-      try {
-        const res = await fetch(`https://project-1-ifvd.onrender.com/calculate-age?dob=${dob}`);
-        const age = await res.text();
-        document.getElementById("result").innerText = `🎉 Your Age is: ${age}`;
-      } catch (error) {
-        document.getElementById("result").innerText = "Error fetching age 😥";
-        console.error(error);
+      clearInterval(intervalId); // Clear any existing timer
+      calculateAndStartTimer(new Date(dob));
+    }
+
+    function calculateAndStartTimer(dobDate) {
+      function update() {
+        const now = new Date();
+        let diff = now - dobDate;
+
+        if (diff < 0) {
+          document.getElementById("result").innerText = "You haven't been born yet 🥲";
+          return;
+        }
+
+        const seconds = Math.floor(diff / 1000);
+        const minutes = Math.floor(seconds / 60);
+        const hours = Math.floor(minutes / 60);
+        const days = Math.floor(hours / 24);
+
+        const years = Math.floor(days / 365.25);
+        const months = Math.floor((days % 365.25) / 30.44);
+        const remainingDays = Math.floor((days % 365.25) % 30.44);
+        const remainingHours = hours % 24;
+        const remainingMinutes = minutes % 60;
+        const remainingSeconds = seconds % 60;
+
+        document.getElementById("result").innerText = `
+        ⏱️ You have survived:
+        ${years} years,
+        ${months} months,
+        ${remainingDays} days,
+        ${remainingHours} hours,
+        ${remainingMinutes} minutes,
+        ${remainingSeconds} seconds.`;
       }
+
+      update(); // Initial call
+      intervalId = setInterval(update, 1000);
     }
   </script>
+
 </body>
 </html>
