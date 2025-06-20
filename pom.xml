@@ -12,12 +12,20 @@
 
     <name>Age Calculator API</name>
 
+    <!-- ✅ This line is MAGIC: it gives all default Spring versions -->
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.1.2</version>
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
+
     <properties>
         <java.version>17</java.version>
-        <spring-boot.version>3.1.2</spring-boot.version>
     </properties>
 
     <dependencies>
+        <!-- ✅ No version needed if we use the parent -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
