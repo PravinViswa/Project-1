@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
+@CrossOrigin(origins = "https://pravinviswa.github.io") // 👈 this line fixes CORS!
 public class AgeController {
 
     @GetMapping("/calculate-age")
