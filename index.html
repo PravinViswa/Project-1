@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>🧮 Age Calculator</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; padding: 2rem; }
+    input, button { padding: 10px; font-size: 16px; margin: 1rem; }
+  </style>
+</head>
+<body>
+  <h1>Age Calculator</h1>
+  <input type="date" id="dob" />
+  <button onclick="calculateAge()">Go</button>
+  <p id="result"></p>
+
+  <script>
+    async function calculateAge() {
+      const dob = document.getElementById('dob').value;
+      const res = await fetch(`https://your-app-name.onrender.com/calculate-age?dob=${dob}`);
+      const data = await res.json();
+      
+      if (data.error) {
+        document.getElementById('result').innerText = data.error;
+      } else {
+        document.getElementById('result').innerText =
+          `You are ${data.years} years, ${data.months} months, and ${data.days} days old.`;
+      }
+    }
+  </script>
+</body>
+</html>
