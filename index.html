@@ -1,119 +1,119 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Age Calculator</title>
+  <meta charset="UTF-8" />
+  <title>Age Calculator ⏳</title>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      background: #f0f8ff;
-      color: #333;
+      background: #f0f4f8;
       text-align: center;
-      padding: 50px 20px;
+      padding: 50px;
     }
     h1 {
-      font-size: 2.5rem;
-      margin-bottom: 20px;
+      font-size: 32px;
+      color: #333;
     }
     input[type="date"] {
       padding: 10px;
       font-size: 16px;
-      border: 1px solid #aaa;
-      border-radius: 5px;
+      margin: 20px 0;
     }
     button {
       padding: 10px 20px;
       font-size: 16px;
-      margin-top: 15px;
-      background-color: #28a745;
-      border: none;
+      background: #007bff;
       color: white;
-      border-radius: 5px;
+      border: none;
+      border-radius: 6px;
       cursor: pointer;
     }
     button:hover {
-      background-color: #218838;
+      background: #0056b3;
     }
     #result {
       margin-top: 30px;
-      font-size: 1.2rem;
+      font-size: 18px;
+      color: #222;
+      line-height: 1.6;
     }
-    .fun-text {
+    .highlight {
+      font-size: 22px;
+      font-weight: bold;
+      color: #28a745;
+    }
+    .fun-line {
       font-style: italic;
-      color: #666;
+      color: #555;
       margin-top: 10px;
     }
   </style>
 </head>
 <body>
-  <h1>🧮 Age Calculator</h1>
-  <p>Pick your birthdate and let the magic unfold:</p>
+
+  <h1>🧮 How Long Have You Been Rockin' Life?</h1>
+  <p>Pick your Date of Birth 👇</p>
   <input type="date" id="dob" />
   <br />
   <button onclick="calculateAge()">Calculate</button>
 
-  <div id="result">👶 Pick your birthdate to see how long you’ve been rocking this reality!</div>
-  <p class="fun-text" id="funnyLine"></p>
+  <div id="result"></div>
 
   <script>
-    let ageData = null;
-    let interval;
+    let years = 0, months = 0, days = 0, birthTime = null;
 
-    function calculateAge() {
+    async function calculateAge() {
       const dob = document.getElementById("dob").value;
       if (!dob) {
-        alert("Oops! You gotta pick a date before I can blow your mind 🤯");
+        alert("Pick your birth date first, time traveler!");
         return;
       }
 
-      document.getElementById("result").innerText = "🔍 Crunching the numbers... hang tight!";
-      document.getElementById("funnyLine").innerText = "";
+      try {
+        const response = await fetch(`https://project-1-ifvd.onrender.com/calculate-age?dob=${dob}`);
+        const data = await response.json();
 
-      fetch(`https://project-1-ifvd.onrender.com/calculate-age?dob=${dob}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.error) {
-            document.getElementById("result").innerText = "😵 Invalid date format. Try again!";
-          } else {
-            ageData = {
-              birthDate: new Date(dob),
-              ...data
-            };
-            if (interval) clearInterval(interval);
-            updateAgeLive();
-            interval = setInterval(updateAgeLive, 1000);
+        if (data.error) {
+          document.getElementById("result").innerText = "Error: " + data.error;
+          return;
+        }
 
-            document.getElementById("funnyLine").innerText =
-              "🧠 That’s a whole lotta time spent dodging responsibilities and powering through Mondays!";
-          }
-        })
-        .catch(err => {
-          document.getElementById("result").innerText = "😵 Uh-oh! Something broke. Try again later.";
-          console.error(err);
-        });
+        years = data.years;
+        months = data.months;
+        days = data.days;
+        birthTime = new Date(dob + "T00:00:00");
+
+        updateTimer();
+        setInterval(updateTimer, 1000); // Update every second
+      } catch (err) {
+        document.getElementById("result").innerText = "Something broke 😬";
+        console.error(err);
+      }
     }
 
-    function updateAgeLive() {
-      if (!ageData || !ageData.birthDate) return;
+    function updateTimer() {
+      if (!birthTime) return;
 
       const now = new Date();
-      const diff = now - new Date(ageData.birthDate);
-      const seconds = Math.floor(diff / 1000);
-      const minutes = Math.floor(seconds / 60);
-      const hours = Math.floor(minutes / 60);
-      const days = Math.floor(hours / 24);
-      const months = ageData.months;
-      const years = ageData.years;
+      const diffMs = now - birthTime;
+      const totalSeconds = Math.floor(diffMs / 1000);
+      const liveHours = Math.floor((totalSeconds / 3600) % 24);
+      const liveMinutes = Math.floor((totalSeconds / 60) % 60);
+      const liveSeconds = totalSeconds % 60;
 
-      const liveSeconds = seconds % 60;
-      const liveMinutes = minutes % 60;
-      const liveHours = hours % 24;
-
-      document.getElementById("result").innerHTML =
-        `🎉 You’ve survived <strong>${years}</strong> years, <strong>${months}</strong> months, 
-        <strong>${days % 30}</strong> days, <strong>${liveHours}</strong> hours, 
-        <strong>${liveMinutes}</strong> minutes, <strong>${liveSeconds}</strong> seconds!`;
+      document.getElementById("result").innerHTML = `
+        <p class="highlight">${years} years, ${months} months, ${days % 30} days</p>
+        <p class="highlight">${liveHours} hours, ${liveMinutes} minutes, ${liveSeconds} seconds ⏱️</p>
+        <p class="fun-line">You've seen sunrises, storms, and probably your fair share of awkward moments 🤡</p>
+        <p class="fun-line">Every tick is another chance to do something epic 🚀</p>
+      `;
     }
+
+    // Refresh every hour to handle new day/clock updates
+    setInterval(() => {
+      window.location.reload();
+    }, 60 * 60 * 1000); // 1 hour
   </script>
+
 </body>
 </html>
