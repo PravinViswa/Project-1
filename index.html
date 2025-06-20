@@ -57,6 +57,8 @@
   <div class="fun-line" id="funnyLine"></div>
 
   <script>
+    let refreshIntervalId;
+
     async function calculateAge() {
       const dob = document.getElementById("dob").value;
       const resultDiv = document.getElementById("result");
@@ -75,28 +77,29 @@
 
         if (data.error) {
           resultDiv.innerHTML = `❌ ${data.error}`;
+          funnyLine.innerText = "Try entering a proper date 😅";
           return;
         }
 
-        if (data.status === "future") {
+        if (data.yearsLeft !== undefined) {
           resultDiv.innerHTML = `
             👶 Hold up! You haven't landed on Earth yet.<br>
-            You're arriving in ${data.years} years, ${data.months} months, and ${data.days} days! 🛸
-            <br><br>🕐 Timezone detected: <strong>${data.timezone}</strong>
+            You're arriving in <strong>${data.yearsLeft}</strong> years, <strong>${data.monthsLeft}</strong> months, and <strong>${data.daysLeft}</strong> days! 🛸
+            <br><br>🕐 Timezone detected: <strong>${timezone}</strong>
           `;
           funnyLine.innerText = "Future traveler spotted! 🚀";
           return;
         }
 
-        //live timer
+        // Stop any existing timers
+        clearInterval(refreshIntervalId);
+
+        // Start time in milliseconds
         const startTime = new Date(dob).getTime();
+
         function updateTimer() {
           const now = new Date().getTime();
           const diff = now - startTime;
-
-          const years = data.years;
-          const months = data.months;
-          const days = data.days;
 
           const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
           const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
@@ -104,26 +107,27 @@
 
           resultDiv.innerHTML = `
             ⌛ You’ve survived:<br>
-            <strong>${years}</strong> years, <strong>${months}</strong> months, <strong>${days}</strong> days,<br>
+            <strong>${data.years}</strong> years, <strong>${data.months}</strong> months, <strong>${data.days}</strong> days,<br>
             <strong>${hours}</strong> hours, <strong>${minutes}</strong> minutes, <strong>${seconds}</strong> seconds 🎉<br><br>
-            🕐 Timezone detected: <strong>${data.timezone}</strong>
+            🕐 Timezone detected: <strong>${timezone}</strong>
           `;
         }
 
         updateTimer();
-        setInterval(updateTimer, 1000);
+        refreshIntervalId = setInterval(updateTimer, 1000);
         setInterval(() => location.reload(), 1000 * 60 * 60); // refresh every hour
 
-        //Random fun lines
+        // Fun lines
         const funLines = [
-          "You're older than your favorite one! 😂",
+          "You're older than your favorite 😂",
           "That’s a lot of candles on your cake! 🎂",
-          "You're not old, just well-seasoned. 🌶️",
+          "You're not old, just well-seasoned. 🌶️"
         ];
         funnyLine.innerText = funLines[Math.floor(Math.random() * funLines.length)];
 
       } catch (err) {
         resultDiv.innerHTML = "😵 Oops! Something went wrong. Try again.";
+        funnyLine.innerText = "Our servers are shy today 😬";
         console.error(err);
       }
     }

@@ -1,14 +1,13 @@
 package com.pravinviswa.agecalculator;
 
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.bind.annotation.CrossOrigin;
 
 import java.time.*;
 import java.time.format.DateTimeParseException;
 import java.util.HashMap;
 import java.util.Map;
 
-@CrossOrigin(origins = "https://pravinviswa.github.io") 
+@CrossOrigin(origins = "https://pravinviswa.github.io")
 @RestController
 @RequestMapping("/api")
 public class AgeController {
@@ -27,13 +26,13 @@ public class AgeController {
 
             if (birthDate.isAfter(today)) {
                 Period until = Period.between(today, birthDate);
-                response.put("notBornYet", true);
-                response.put("years", until.getYears());
-                response.put("months", until.getMonths());
-                response.put("days", until.getDays());
+                response.put("status", "future");
+                response.put("yearsLeft", until.getYears());
+                response.put("monthsLeft", until.getMonths());
+                response.put("daysLeft", until.getDays());
             } else {
                 Period age = Period.between(birthDate, today);
-                response.put("notBornYet", false);
+                response.put("status", "past");
                 response.put("years", age.getYears());
                 response.put("months", age.getMonths());
                 response.put("days", age.getDays());
