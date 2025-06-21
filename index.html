@@ -16,7 +16,7 @@
       font-size: 2em;
       margin-bottom: 10px;
     }
-    input[type="date"] {
+    input[type="datetime-local"] {
       padding: 10px;
       font-size: 16px;
       border-radius: 5px;
@@ -34,6 +34,13 @@
     }
     button:hover {
       background-color: #0056b3;
+    }
+    #timezone-select {
+      position: fixed;
+      bottom: 10px;
+      left: 15px;
+      font-size: 14px;
+      padding: 4px;
     }
     #result {
       margin-top: 30px;
@@ -92,8 +99,8 @@
 </head>
 <body>
   <h1>🧮 How Long Have You Been Rockin' Life?</h1>
-  <p>Pick your Date of Birth 👇</p>
-  <input type="date" id="dob" />
+  <p>Pick your Date and Time of Birth 👇</p>
+  <input type="datetime-local" id="dob" />
   <br><br>
   <button onclick="calculateAge()">Calculate</button>
 
@@ -108,20 +115,36 @@
   </div>
 
   <div id="sleep-timer">Sleep in: 600s</div>
+  <select id="timezone-select" onchange="resetResult()"></select>
   <canvas id="confetti"></canvas>
 
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <script>
     let refreshIntervalId;
     let sleepCountdownId;
-    let sleepTimeLeft = 600; // in seconds
+    let sleepTimeLeft = 600;
 
-    // Wake backend on load
-    window.addEventListener("DOMContentLoaded", () => {
-      fetch("https://project-1-ifvd.onrender.com/api/ping")
-        .then(() => console.log("Server pinged on load"))
-        .catch(() => console.warn("Server wake-up ping failed"));
-    });
+    const timeZoneSelect = document.getElementById("timezone-select");
+
+    function populateTimezones() {
+      const timezones = Intl.supportedValuesOf("timeZone");
+      timezones.forEach(tz => {
+        const option = document.createElement("option");
+        option.value = tz;
+        option.textContent = tz;
+        timeZoneSelect.appendChild(option);
+      });
+
+      const localTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      timeZoneSelect.value = localTZ;
+    }
+
+    function resetResult() {
+      clearInterval(refreshIntervalId);
+      document.getElementById("result").innerHTML = "";
+      document.getElementById("funnyLine").innerText = "";
+      document.getElementById("loading").innerText = "";
+    }
 
     function putPageToSleep() {
       document.getElementById("sleep-screen").style.display = "flex";
@@ -150,7 +173,8 @@
       clearInterval(refreshIntervalId);
       clearInterval(sleepCountdownId);
 
-      const dob = document.getElementById("dob").value;
+      const dobInput = document.getElementById("dob").value;
+      const timezone = timeZoneSelect.value;
       const resultDiv = document.getElementById("result");
       const funnyLine = document.getElementById("funnyLine");
       const loading = document.getElementById("loading");
@@ -159,16 +183,14 @@
       funnyLine.innerText = "";
       loading.innerText = "⏳ Hang tight... Crunching your age data...";
 
-      if (!dob) {
-        alert("Pick your date of birth!");
+      if (!dobInput) {
+        alert("Please enter your date and time of birth!");
         loading.innerText = "";
         return;
       }
 
-      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
       try {
-        const res = await fetch(`https://project-1-ifvd.onrender.com/api/calculate-age?dob=${dob}&timezone=${timezone}`);
+        const res = await fetch(`https://project-1-ifvd.onrender.com/api/calculate-age?dob=${dobInput}&timezone=${timezone}`);
         const data = await res.json();
         loading.innerText = "";
 
@@ -178,32 +200,16 @@
           return;
         }
 
-        if (data.yearsLeft !== undefined) {
-          resultDiv.innerHTML = `
-            👶 Hold up! You haven't landed on Earth yet.<br>
-            You're arriving in 
-            ${data.yearsLeft ? `<strong>${data.yearsLeft}</strong> years, ` : ""}
-            ${data.monthsLeft ? `<strong>${data.monthsLeft}</strong> months, ` : ""}
-            ${data.daysLeft ? `<strong>${data.daysLeft}</strong> days</strong>` : ""}
-            🛸
-            <br><br>🕐 Timezone detected: <strong>${timezone}</strong>
-          `;
-          funnyLine.innerText = "Future traveler spotted! 🚀";
+        const dobDate = new Date(dobInput);
+        const today = new Date().toLocaleString("en-US", { timeZone: timezone });
+        const now = new Date(today);
+        const isBirthday = dobDate.getDate() === now.getDate() && dobDate.getMonth() === now.getMonth();
 
-          startSleepCountdown();
-          setTimeout(putPageToSleep, 600000);
-          return;
-        }
-
-        const today = new Date();
-        const dobDate = new Date(dob);
-        const isBirthday = dobDate.getDate() === today.getDate() && dobDate.getMonth() === today.getMonth();
-
-        const startTime = new Date(dob).getTime();
+        const startTime = new Date(dobInput).getTime();
 
         function updateTimer() {
-          const now = new Date().getTime();
-          const diff = now - startTime;
+          const serverNow = new Date().toLocaleString("en-US", { timeZone: timezone });
+          const diff = new Date(serverNow).getTime() - startTime;
 
           const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
           const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
@@ -250,25 +256,13 @@
       }
     }
 
-    function scheduleHourlyUpdate() {
-      const now = new Date();
-      const msUntilNextHour = (60 - now.getMinutes()) * 60 * 1000 - now.getSeconds() * 1000 - now.getMilliseconds();
+    populateTimezones();
 
-      setTimeout(() => {
-        const dob = document.getElementById("dob").value;
-        if (dob) {
-          calculateAge();
-        }
-        setInterval(() => {
-          const dob = document.getElementById("dob").value;
-          if (dob) {
-            calculateAge();
-          }
-        }, 60 * 60 * 1000);
-      }, msUntilNextHour);
-    }
-
-    scheduleHourlyUpdate();
+    window.addEventListener("DOMContentLoaded", () => {
+      fetch("https://project-1-ifvd.onrender.com/api/ping")
+        .then(() => console.log("Server pinged on load"))
+        .catch(() => console.warn("Server wake-up ping failed"));
+    });
   </script>
 </body>
 </html>
