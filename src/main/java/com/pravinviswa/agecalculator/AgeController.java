@@ -3,6 +3,7 @@ package com.pravinviswa.agecalculator;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.HashMap;
 import java.util.Map;
@@ -13,22 +14,25 @@ public class AgeController {
 
     @GetMapping("/calculate-age")
     public Map<String, Object> calculateAge(
-            @RequestParam String dob,
+            @RequestParam String dob, // Format: yyyy-MM-ddTHH:mm
             @RequestParam(required = false) String timezone) {
 
         Map<String, Object> response = new HashMap<>();
 
         try {
-            // Parse full date-time
-            LocalDateTime birthDateTime = LocalDateTime.parse(dob);
-            ZoneId userZone = (timezone != null && !timezone.isEmpty()) ? ZoneId.of(timezone) : ZoneId.systemDefault();
+            // Parse birth datetime from request
+            LocalDateTime birthDateTime = LocalDateTime.parse(dob, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
 
-            ZonedDateTime birthZoned = birthDateTime.atZone(userZone);
-            ZonedDateTime nowZoned = ZonedDateTime.now(userZone);
+            // Get user timezone, fallback to UTC
+            ZoneId zoneId = (timezone != null && !timezone.isEmpty()) ? ZoneId.of(timezone) : ZoneId.of("UTC");
+
+            ZonedDateTime birthZoned = birthDateTime.atZone(zoneId);
+            ZonedDateTime nowZoned = ZonedDateTime.now(zoneId);
 
             if (birthZoned.isAfter(nowZoned)) {
-                Duration duration = Duration.between(nowZoned, birthZoned);
+                // Future birth
                 Period period = Period.between(nowZoned.toLocalDate(), birthZoned.toLocalDate());
+                Duration duration = Duration.between(nowZoned.toLocalTime(), birthZoned.toLocalTime());
 
                 response.put("status", "future");
                 response.put("yearsLeft", period.getYears());
@@ -38,8 +42,9 @@ public class AgeController {
                 response.put("minutesLeft", duration.toMinutesPart());
                 response.put("secondsLeft", duration.toSecondsPart());
             } else {
+                // Past birth
                 Period period = Period.between(birthZoned.toLocalDate(), nowZoned.toLocalDate());
-                Duration duration = Duration.between(birthZoned, nowZoned);
+                Duration duration = Duration.between(birthZoned.toLocalTime(), nowZoned.toLocalTime());
 
                 response.put("status", "past");
                 response.put("years", period.getYears());
@@ -50,12 +55,19 @@ public class AgeController {
                 response.put("seconds", duration.toSecondsPart());
             }
 
-            response.put("timezone", userZone.toString());
+            response.put("timezone", zoneId.toString());
 
         } catch (DateTimeParseException e) {
-            response.put("error", "Invalid date-time format. Use yyyy-MM-ddTHH:mm");
+            response.put("error", "Invalid date-time format. Use format yyyy-MM-ddTHH:mm");
+        } catch (Exception ex) {
+            response.put("error", "Server error: " + ex.getMessage());
         }
 
         return response;
+    }
+
+    @GetMapping("/ping")
+    public String ping() {
+        return "pong";
     }
 }
