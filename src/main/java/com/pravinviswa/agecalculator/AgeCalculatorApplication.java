@@ -1,4 +1,4 @@
-package com.pravin.agecalculator;
+package com.pravinviswa.agecalculator;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
