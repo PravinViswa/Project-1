@@ -45,27 +45,91 @@
       font-style: italic;
       color: #888;
     }
+    #loading {
+      margin-top: 20px;
+      font-size: 16px;
+      color: #555;
+    }
+    #sleep-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 100%;
+      background-color: rgba(240, 248, 255, 0.95);
+      backdrop-filter: blur(8px);
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 999;
+    }
+    #sleep-screen h2 {
+      font-size: 24px;
+      color: #444;
+    }
+    #sleep-screen span {
+      font-size: 48px;
+      margin-top: 10px;
+    }
+    canvas#confetti {
+      position: fixed;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      z-index: 1000;
+    }
   </style>
 </head>
 <body>
   <h1>🧮 How Long Have You Been Rockin' Life?</h1>
-  <p>Input your Date of Birth 👇</p>
+  <p>Drop your Date of Birth 👇</p>
   <input type="date" id="dob" />
   <button onclick="calculateAge()">Calculate</button>
 
+  <div id="loading"></div>
   <div id="result"></div>
   <div class="fun-line" id="funnyLine"></div>
 
+  <div id="sleep-screen">
+    <h2>⏸️ The page has dozed off for now</h2>
+    <span>😴✨</span>
+    <p style="margin-top:10px;">Refresh the page to wake it up!</p>
+  </div>
+
+  <canvas id="confetti"></canvas>
+
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <script>
     let refreshIntervalId;
 
+    // Wake up backend server on page load
+    window.addEventListener("DOMContentLoaded", () => {
+      fetch("https://project-1-ifvd.onrender.com/api/ping")
+        .then(() => console.log("🔔 Server pinged on load"))
+        .catch(() => console.warn("⚠️ Server wake-up ping failed"));
+    });
+
+    // Sleep page after calculation
+    function putPageToSleep() {
+      document.getElementById("sleep-screen").style.display = "flex";
+    }
+
     async function calculateAge() {
+      clearInterval(refreshIntervalId);
+
       const dob = document.getElementById("dob").value;
       const resultDiv = document.getElementById("result");
       const funnyLine = document.getElementById("funnyLine");
+      const loading = document.getElementById("loading");
+
+      resultDiv.innerHTML = "";
+      funnyLine.innerText = "";
+      loading.innerText = "⏳ Hang tight... Crunching your age data...";
 
       if (!dob) {
-        alert("Please select your date of birth!");
+        alert("Pick your date of birth!");
+        loading.innerText = "";
         return;
       }
 
@@ -74,6 +138,7 @@
       try {
         const res = await fetch(`https://project-1-ifvd.onrender.com/api/calculate-age?dob=${dob}&timezone=${timezone}`);
         const data = await res.json();
+        loading.innerText = "";
 
         if (data.error) {
           resultDiv.innerHTML = `❌ ${data.error}`;
@@ -82,22 +147,25 @@
         }
 
         if (data.yearsLeft !== undefined) {
-          const parts = [];
-          if (data.yearsLeft) parts.push(`<strong>${data.yearsLeft}</strong> years`);
-          if (data.monthsLeft) parts.push(`<strong>${data.monthsLeft}</strong> months`);
-          if (data.daysLeft) parts.push(`<strong>${data.daysLeft}</strong> days`);
-
           resultDiv.innerHTML = `
             👶 Hold up! You haven't landed on Earth yet.<br>
-            You're arriving in ${parts.join(', ')}! 🛸
+            You're arriving in 
+            ${data.yearsLeft ? `<strong>${data.yearsLeft}</strong> years, ` : ""}
+            ${data.monthsLeft ? `<strong>${data.monthsLeft}</strong> months, ` : ""}
+            ${data.daysLeft ? `<strong>${data.daysLeft}</strong> days</strong>` : ""}
+            🛸
             <br><br>🕐 Timezone detected: <strong>${timezone}</strong>
           `;
           funnyLine.innerText = "Future traveler spotted! 🚀";
+
+          // Put to sleep in 8 seconds
+          setTimeout(putPageToSleep, 8000);
           return;
         }
 
-        // Stop any previous timers
-        clearInterval(refreshIntervalId);
+        const today = new Date();
+        const dobDate = new Date(dob);
+        const isBirthday = dobDate.getDate() === today.getDate() && dobDate.getMonth() === today.getMonth();
 
         const startTime = new Date(dob).getTime();
 
@@ -109,39 +177,74 @@
           const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
           const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
-          const parts = [];
-          if (data.years) parts.push(`<strong>${data.years}</strong> years`);
-          if (data.months) parts.push(`<strong>${data.months}</strong> months`);
-          if (data.days) parts.push(`<strong>${data.days}</strong> days`);
-          if (hours) parts.push(`<strong>${hours}</strong> hours`);
-          if (minutes) parts.push(`<strong>${minutes}</strong> minutes`);
-          if (seconds || parts.length === 0) parts.push(`<strong>${seconds}</strong> seconds`);
-
           resultDiv.innerHTML = `
             ⌛ You’ve survived:<br>
-            ${parts.join(', ')} 🎉<br><br>
-            🕐 Timezone: <strong>${timezone}</strong>
+            ${data.years ? `<strong>${data.years}</strong> years, ` : ""}
+            ${data.months ? `<strong>${data.months}</strong> months, ` : ""}
+            ${data.days ? `<strong>${data.days}</strong> days, ` : ""}
+            ${hours ? `<strong>${hours}</strong> hours, ` : ""}
+            ${minutes ? `<strong>${minutes}</strong> minutes, ` : ""}
+            <strong>${seconds}</strong> seconds
+            🎉
+            <br><br>🕐 Timezone: <strong>${timezone}</strong>
           `;
         }
 
         updateTimer();
         refreshIntervalId = setInterval(updateTimer, 1000);
-        setInterval(() => location.reload(), 1000 * 60 * 60); // Refresh every hour
 
-        const funLines = [
-          "You're older than your favorite 😂",
-          "That’s a lot of candles on your cake! 🎂",
-          "You're not old, just well-seasoned. 🌶️",
-          "Whoa! That’s a legendary timeline 😎"
-        ];
-        funnyLine.innerText = funLines[Math.floor(Math.random() * funLines.length)];
+        if (isBirthday) {
+          funnyLine.innerText = "🎉 Happy Birthday! 🎈";
 
+          // Fire confetti
+          confetti({
+            particleCount: 150,
+            spread: 100,
+            origin: { y: 0.6 }
+          });
+
+          setTimeout(putPageToSleep, 15000); // Sleep after 15s if birthday
+        } else {
+          const funLines = [
+            "You're older than your favorite 😂",
+            "That’s a lot of candles on your cake! 🎂",
+            "You're not old, just well-seasoned. 🌶️",
+            "You're aging like fine wine 🍷",
+            "Every second alive is another flex 💪",
+            "Vibes, wisdom, and age — you're packin' it all! 💥",
+            "More years, more stories. Keep rockin'! 🧠✨",
+            "Still younger than the oldest meme 😎"
+          ];
+          funnyLine.innerText = funLines[Math.floor(Math.random() * funLines.length)];
+
+          setTimeout(putPageToSleep, 12000); // Sleep in 12s otherwise
+        }
       } catch (err) {
+        loading.innerText = "";
         resultDiv.innerHTML = "😵 Oops! Something went wrong. Try again.";
         funnyLine.innerText = "Looks like server is shy today 😬";
         console.error(err);
       }
     }
+    function scheduleHourlyUpdate() {
+      const now = new Date();
+      const msUntilNextHour = (60 - now.getMinutes()) * 60 * 1000 - now.getSeconds() * 1000 - now.getMilliseconds();
+
+      setTimeout(() => {
+        const dob = document.getElementById("dob").value;
+        if (dob) {
+          calculateAge();
+        }
+        setInterval(() => {
+          const dob = document.getElementById("dob").value;
+          if (dob) {
+            calculateAge();
+          }
+        }, 60 * 60 * 1000);
+      }, msUntilNextHour);
+    }
+
+    scheduleHourlyUpdate();
   </script>
 </body>
 </html>
