@@ -72,7 +72,7 @@
       const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
       try {
-        const res = await fetch(`https://project-1-ifvd.onrender.com/calculate-age?dob=${dob}&timezone=${timezone}`);
+        const res = await fetch(`https://project-1-ifvd.onrender.com/api/calculate-age?dob=${dob}&timezone=${timezone}`);
         const data = await res.json();
 
         if (data.error) {
