@@ -7,7 +7,6 @@ import java.time.format.DateTimeParseException;
 import java.util.HashMap;
 import java.util.Map;
 
-@CrossOrigin(origins = "https://pravinviswa.github.io")
 @RestController
 @RequestMapping("/api")
 public class AgeController {

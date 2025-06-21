@@ -1,4 +1,4 @@
-package com.pravinviswa.agecalculator;
+package com.pravinviswa.agecalculator.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -9,7 +9,7 @@ public class CorsConfig implements WebMvcConfigurer {
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/api/**") // or "/**" if you want everything
+        registry.addMapping("/api/**")
                 .allowedOrigins("https://pravinviswa.github.io")
                 .allowedMethods("GET", "POST")
                 .allowedHeaders("*");
