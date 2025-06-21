@@ -65,9 +65,4 @@ public class AgeController {
 
         return response;
     }
-
-    @GetMapping("/ping")
-    public String ping() {
-        return "pong";
-    }
 }
