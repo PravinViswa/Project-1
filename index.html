@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Age Calculator</title>
+  <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.3/build/global/luxon.min.js"></script>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -26,8 +27,8 @@
       position: fixed;
       bottom: 10px;
       left: 15px;
+      padding: 5px;
       font-size: 14px;
-      padding: 6px;
     }
     button {
       padding: 10px 20px;
@@ -103,7 +104,6 @@
   <input type="datetime-local" id="dob" />
   <br><br>
   <button onclick="calculateAge()">Calculate</button>
-  <select id="timezoneSelect"></select>
 
   <div id="loading"></div>
   <div id="result"></div>
@@ -115,42 +115,41 @@
     <p style="margin-top:10px;">Refresh the page to wake it up!</p>
   </div>
 
+  <select id="timezoneSelect"></select>
   <div id="sleep-timer">Sleep in: 600s</div>
   <canvas id="confetti"></canvas>
 
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <script>
-    const timezoneSelect = document.getElementById("timezoneSelect");
-    const defaultZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    const timezones = Intl.supportedValuesOf("timeZone");
-
-    timezones.forEach(tz => {
-      const option = document.createElement("option");
-      option.value = tz;
-      option.textContent = tz;
-      if (tz === defaultZone) option.selected = true;
-      timezoneSelect.appendChild(option);
-    });
-
-    timezoneSelect.addEventListener("change", () => {
-      document.getElementById("result").innerHTML = "";
-      document.getElementById("funnyLine").innerText = "";
-    });
-
-    let refreshIntervalId;
-    let sleepCountdownId;
+    const DateTime = luxon.DateTime;
+    let refreshIntervalId, sleepCountdownId;
     let sleepTimeLeft = 600;
+    let lastDob = "", lastZone = "";
 
-    window.addEventListener("DOMContentLoaded", () => {
-      fetch("https://project-1-ifvd.onrender.com/api/ping")
-        .then(() => console.log("Server pinged on load"))
-        .catch(() => console.warn("Server wake-up ping failed"));
-    });
+    const resultDiv = document.getElementById("result");
+    const funnyLine = document.getElementById("funnyLine");
+    const loading = document.getElementById("loading");
 
-    function putPageToSleep() {
-      document.getElementById("sleep-screen").style.display = "flex";
-      clearInterval(sleepCountdownId);
-      document.getElementById("sleep-timer").style.display = "none";
+    // Fetch available timezones for dropdown
+    function populateTimezones() {
+      const select = document.getElementById("timezoneSelect");
+      const zones = Intl.supportedValuesOf('timeZone');
+      const currentZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+      zones.forEach(zone => {
+        const option = document.createElement("option");
+        option.value = zone;
+        option.textContent = zone;
+        if (zone === currentZone) option.selected = true;
+        select.appendChild(option);
+      });
+
+      select.addEventListener("change", () => {
+        resultDiv.innerHTML = "";
+        funnyLine.innerHTML = "";
+        loading.innerText = "";
+        clearInterval(refreshIntervalId);
+      });
     }
 
     function startSleepCountdown() {
@@ -164,34 +163,41 @@
         if (sleepTimeLeft <= 0) {
           clearInterval(sleepCountdownId);
           sleepDisplay.style.display = "none";
-          return;
+          putPageToSleep();
+        } else {
+          sleepDisplay.innerText = `Sleep in: ${sleepTimeLeft}s`;
         }
-        sleepDisplay.innerText = `Sleep in: ${sleepTimeLeft}s`;
       }, 1000);
+    }
+
+    function putPageToSleep() {
+      document.getElementById("sleep-screen").style.display = "flex";
+      clearInterval(sleepCountdownId);
+      document.getElementById("sleep-timer").style.display = "none";
     }
 
     async function calculateAge() {
       clearInterval(refreshIntervalId);
       clearInterval(sleepCountdownId);
 
-      const dob = document.getElementById("dob").value;
+      const dobInput = document.getElementById("dob").value;
       const timezone = document.getElementById("timezoneSelect").value;
-      const resultDiv = document.getElementById("result");
-      const funnyLine = document.getElementById("funnyLine");
-      const loading = document.getElementById("loading");
 
       resultDiv.innerHTML = "";
       funnyLine.innerText = "";
       loading.innerText = "⏳ Hang tight... Crunching your age data...";
 
-      if (!dob) {
+      if (!dobInput) {
         alert("Pick your date and time of birth!");
         loading.innerText = "";
         return;
       }
 
+      lastDob = dobInput;
+      lastZone = timezone;
+
       try {
-        const res = await fetch(`https://project-1-ifvd.onrender.com/api/calculate-age?dob=${dob}&timezone=${timezone}`);
+        const res = await fetch(`https://project-1-ifvd.onrender.com/api/calculate-age?dob=${dobInput}&timezone=${timezone}`);
         const data = await res.json();
         loading.innerText = "";
 
@@ -201,37 +207,30 @@
           return;
         }
 
-        if (data.status === "future") {
+        const birth = DateTime.fromISO(dobInput, { zone: timezone });
+
+        function updateTimer() {
+          const now = DateTime.now().setZone(timezone);
+          const diff = now.diff(birth, ['years', 'months', 'days', 'hours', 'minutes', 'seconds']).toObject();
+
           resultDiv.innerHTML = `
-            👶 Hold up! You haven't landed on Earth yet.<br>
-            You're arriving in 
-            ${data.yearsLeft ? `<strong>${data.yearsLeft}</strong> years, ` : ""}
-            ${data.monthsLeft ? `<strong>${data.monthsLeft}</strong> months, ` : ""}
-            ${data.daysLeft ? `<strong>${data.daysLeft}</strong> days</strong>` : ""}
-            🛸<br><br>🕐 Timezone detected: <strong>${timezone}</strong>
+            ⌛ You’ve survived:<br>
+            ${diff.years ? `<strong>${Math.floor(diff.years)}</strong> years, ` : ""}
+            ${diff.months ? `<strong>${Math.floor(diff.months)}</strong> months, ` : ""}
+            ${diff.days ? `<strong>${Math.floor(diff.days)}</strong> days, ` : ""}
+            ${diff.hours ? `<strong>${Math.floor(diff.hours)}</strong> hours, ` : ""}
+            ${diff.minutes ? `<strong>${Math.floor(diff.minutes)}</strong> minutes, ` : ""}
+            <strong>${Math.floor(diff.seconds)}</strong> seconds 🎉
+            <br><br>🕐 Timezone: <strong>${timezone}</strong>
           `;
-          funnyLine.innerText = "Future traveler spotted! 🚀";
-          startSleepCountdown();
-          setTimeout(putPageToSleep, 600000);
-          return;
         }
 
-        const { years, months, days, hours, minutes, seconds } = data;
+        updateTimer();
+        refreshIntervalId = setInterval(updateTimer, 1000);
 
-        resultDiv.innerHTML = `
-          ⌛ You’ve survived:<br>
-          ${years ? `<strong>${years}</strong> years, ` : ""}
-          ${months ? `<strong>${months}</strong> months, ` : ""}
-          ${days ? `<strong>${days}</strong> days, ` : ""}
-          ${hours ? `<strong>${hours}</strong> hours, ` : ""}
-          ${minutes ? `<strong>${minutes}</strong> minutes, ` : ""}
-          <strong>${seconds}</strong> seconds 🎉<br><br>
-          🕐 Timezone: <strong>${timezone}</strong>
-        `;
-
-        const today = new Date();
-        const dobDate = new Date(dob);
-        const isBirthday = dobDate.getDate() === today.getDate() && dobDate.getMonth() === today.getMonth();
+        const birthDate = birth.toJSDate();
+        const nowDate = DateTime.now().setZone(timezone).toJSDate();
+        const isBirthday = birthDate.getDate() === nowDate.getDate() && birthDate.getMonth() === nowDate.getMonth();
 
         if (isBirthday) {
           funnyLine.innerHTML = "<strong>Happy Birthday!</strong>";
@@ -259,6 +258,12 @@
         console.error(err);
       }
     }
+
+    // Initial ping + timezone dropdown setup
+    window.addEventListener("DOMContentLoaded", () => {
+      fetch("https://project-1-ifvd.onrender.com/api/ping").catch(() => {});
+      populateTimezones();
+    });
   </script>
 </body>
 </html>
