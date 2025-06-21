@@ -79,12 +79,22 @@
       pointer-events: none;
       z-index: 1000;
     }
+    #sleep-timer {
+      position: fixed;
+      bottom: 10px;
+      right: 15px;
+      font-size: 14px;
+      color: #aaa;
+      font-style: italic;
+      z-index: 1001;
+    }
   </style>
 </head>
 <body>
   <h1>🧮 How Long Have You Been Rockin' Life?</h1>
-  <p>Drop your Date of Birth 👇</p>
+  <p>Pick your Date of Birth 👇</p>
   <input type="date" id="dob" />
+  <br>
   <button onclick="calculateAge()">Calculate</button>
 
   <div id="loading"></div>
@@ -92,31 +102,53 @@
   <div class="fun-line" id="funnyLine"></div>
 
   <div id="sleep-screen">
-    <h2>⏸️ The page has dozed off for now</h2>
+    <h2>⏸️ The server has dozed off for now</h2>
     <span>😴✨</span>
     <p style="margin-top:10px;">Refresh the page to wake it up!</p>
   </div>
 
+  <div id="sleep-timer">Sleep in: 600s</div>
   <canvas id="confetti"></canvas>
 
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <script>
     let refreshIntervalId;
+    let sleepCountdownId;
+    let sleepTimeLeft = 600; // in seconds
 
-    // Wake up backend server on page load
+    // Wake backend on load
     window.addEventListener("DOMContentLoaded", () => {
       fetch("https://project-1-ifvd.onrender.com/api/ping")
-        .then(() => console.log("🔔 Server pinged on load"))
-        .catch(() => console.warn("⚠️ Server wake-up ping failed"));
+        .then(() => console.log("Server pinged on load"))
+        .catch(() => console.warn("Server wake-up ping failed"));
     });
 
-    // Sleep page after calculation
     function putPageToSleep() {
       document.getElementById("sleep-screen").style.display = "flex";
+      clearInterval(sleepCountdownId);
+      document.getElementById("sleep-timer").style.display = "none";
+    }
+
+    function startSleepCountdown() {
+      const sleepDisplay = document.getElementById("sleep-timer");
+      sleepTimeLeft = 600;
+      sleepDisplay.style.display = "block";
+      sleepDisplay.innerText = `Sleep in: ${sleepTimeLeft}s`;
+
+      sleepCountdownId = setInterval(() => {
+        sleepTimeLeft--;
+        if (sleepTimeLeft <= 0) {
+          clearInterval(sleepCountdownId);
+          sleepDisplay.style.display = "none";
+          return;
+        }
+        sleepDisplay.innerText = `Sleep in: ${sleepTimeLeft}s`;
+      }, 1000);
     }
 
     async function calculateAge() {
       clearInterval(refreshIntervalId);
+      clearInterval(sleepCountdownId);
 
       const dob = document.getElementById("dob").value;
       const resultDiv = document.getElementById("result");
@@ -141,7 +173,7 @@
         loading.innerText = "";
 
         if (data.error) {
-          resultDiv.innerHTML = `❌ ${data.error}`;
+          resultDiv.innerHTML = `${data.error}`;
           funnyLine.innerText = "Try entering a proper date 😅";
           return;
         }
@@ -157,7 +189,8 @@
             <br><br>🕐 Timezone detected: <strong>${timezone}</strong>
           `;
           funnyLine.innerText = "Future traveler spotted! 🚀";
-          
+
+          startSleepCountdown();
           setTimeout(putPageToSleep, 600000);
           return;
         }
@@ -183,8 +216,7 @@
             ${data.days ? `<strong>${data.days}</strong> days, ` : ""}
             ${hours ? `<strong>${hours}</strong> hours, ` : ""}
             ${minutes ? `<strong>${minutes}</strong> minutes, ` : ""}
-            <strong>${seconds}</strong> seconds
-            🎉
+            <strong>${seconds}</strong> seconds 🎉
             <br><br>🕐 Timezone: <strong>${timezone}</strong>
           `;
         }
@@ -193,38 +225,31 @@
         refreshIntervalId = setInterval(updateTimer, 1000);
 
         if (isBirthday) {
-          funnyLine.innerText = "🎉 Happy Birthday! 🎈";
-
-          // Fire confetti
-          confetti({
-            particleCount: 150,
-            spread: 100,
-            origin: { y: 0.6 }
-          });
-
-          setTimeout(putPageToSleep, 600000); 
+          funnyLine.innerHTML = "<strong>Happy Birthday!</strong>";
+          confetti({ particleCount: 150, spread: 100, origin: { y: 0.6 } });
         } else {
           const funLines = [
             "You're older than your favorite 😂",
             "That’s a lot of candles on your cake! 🎂",
             "You're not old, just well-seasoned. 🌶️",
             "You're aging like fine wine 🍷",
-            "Every second alive is another flex 💪",
             "Vibes, wisdom, and age — you're packin' it all! 💥",
             "More years, more stories. Keep rockin'! 🧠✨",
             "Still younger than the oldest meme 😎"
           ];
           funnyLine.innerText = funLines[Math.floor(Math.random() * funLines.length)];
-
-          setTimeout(putPageToSleep, 600000); 
         }
+
+        startSleepCountdown();
+        setTimeout(putPageToSleep, 600000);
       } catch (err) {
         loading.innerText = "";
         resultDiv.innerHTML = "😵 Oops! Something went wrong. Try again.";
-        funnyLine.innerText = "Looks like server is shy today 😬";
+        funnyLine.innerText = "Looks like server is shy this time 😬";
         console.error(err);
       }
     }
+
     function scheduleHourlyUpdate() {
       const now = new Date();
       const msUntilNextHour = (60 - now.getMinutes()) * 60 * 1000 - now.getSeconds() * 1000 - now.getMilliseconds();
