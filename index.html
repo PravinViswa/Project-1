@@ -157,9 +157,8 @@
             <br><br>🕐 Timezone detected: <strong>${timezone}</strong>
           `;
           funnyLine.innerText = "Future traveler spotted! 🚀";
-
-          // Put to sleep in 8 seconds
-          setTimeout(putPageToSleep, 8000);
+          
+          setTimeout(putPageToSleep, 600000);
           return;
         }
 
@@ -203,7 +202,7 @@
             origin: { y: 0.6 }
           });
 
-          setTimeout(putPageToSleep, 15000); // Sleep after 15s if birthday
+          setTimeout(putPageToSleep, 600000); 
         } else {
           const funLines = [
             "You're older than your favorite 😂",
@@ -217,7 +216,7 @@
           ];
           funnyLine.innerText = funLines[Math.floor(Math.random() * funLines.length)];
 
-          setTimeout(putPageToSleep, 12000); // Sleep in 12s otherwise
+          setTimeout(putPageToSleep, 600000); 
         }
       } catch (err) {
         loading.innerText = "";
