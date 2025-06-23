@@ -100,7 +100,7 @@
 </head>
 <body>
   <h1>🧮 How Long Have You Been Rockin' Life?</h1>
-  <p>Pick your Date and Time of Birth 👇</p>
+  <p>Pick Date and Time of Birth 👇</p>
   <input type="datetime-local" id="dob" />
   <br><br>
   <button onclick="calculateAge()">Calculate</button>
@@ -116,7 +116,7 @@
   </div>
 
   <select id="timezoneSelect"></select>
-  <div id="sleep-timer">Sleep in: 600s</div>
+  <div id="sleep-timer">Server Sleep Countdown: 600s</div>
   <canvas id="confetti"></canvas>
 
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -156,7 +156,7 @@
       const sleepDisplay = document.getElementById("sleep-timer");
       sleepTimeLeft = 600;
       sleepDisplay.style.display = "block";
-      sleepDisplay.innerText = `Sleep in: ${sleepTimeLeft}s`;
+      sleepDisplay.innerText = `Server Sleep Countdown: ${sleepTimeLeft}s`;
 
       sleepCountdownId = setInterval(() => {
         sleepTimeLeft--;
@@ -165,7 +165,7 @@
           sleepDisplay.style.display = "none";
           putPageToSleep();
         } else {
-          sleepDisplay.innerText = `Sleep in: ${sleepTimeLeft}s`;
+          sleepDisplay.innerText = `Server Sleep Countdown: ${sleepTimeLeft}s`;
         }
       }, 1000);
     }
@@ -185,7 +185,7 @@
 
       resultDiv.innerHTML = "";
       funnyLine.innerText = "";
-      loading.innerText = "⏳ Hang tight... Crunching your age data...";
+      loading.innerText = "⏳ Hang tight...First time hit takes time usually as server is in sleep:) Waking up server...";
 
       if (!dobInput) {
         alert("Pick your date and time of birth!");
