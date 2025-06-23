@@ -185,7 +185,27 @@
 
       resultDiv.innerHTML = "";
       funnyLine.innerText = "";
-      loading.innerText = "⏳ Hang tight... Crunching your age data...";
+      
+const loadingMessages = [
+  "⏳ Hold up... Waking up the server from its nap... 💤",
+  "🔧 Spinning up some backend magic... give it a sec!",
+  "😴 The server's sipping coffee and getting ready...",
+  "🧙‍♂️ Waking up the backend wizard"
+];
+
+const secondMessages = [
+  "💸 Not a paid server — so yeah, takes a few secs to warm up!",
+  "🚀 First request is slow because... free tier server struggles 😬",
+  "🧊 Cold start alert: Free tier server waking up like a Monday morning!",
+];
+
+const msg1 = loadingMessages[Math.floor(Math.random() * loadingMessages.length)];
+const msg2 = secondMessages[Math.floor(Math.random() * secondMessages.length)];
+
+loading.innerText = msg1;
+setTimeout(() => {
+  loading.innerText = msg2;
+}, 2000);
 
       if (!dobInput) {
         alert("Pick your date and time of birth!");
