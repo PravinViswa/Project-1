@@ -156,7 +156,7 @@
       const sleepDisplay = document.getElementById("sleep-timer");
       sleepTimeLeft = 600;
       sleepDisplay.style.display = "block";
-      sleepDisplay.innerText = `Server Sleep Countdown: ${sleepTimeLeft}s`;
+      sleepDisplay.innerText = `Auto-Sleep: ${sleepTimeLeft}s`;
 
       sleepCountdownId = setInterval(() => {
         sleepTimeLeft--;
@@ -165,7 +165,7 @@
           sleepDisplay.style.display = "none";
           putPageToSleep();
         } else {
-          sleepDisplay.innerText = `Server Sleep Countdown: ${sleepTimeLeft}s`;
+          sleepDisplay.innerText = `Auto-Sleep: ${sleepTimeLeft}s`;
         }
       }, 1000);
     }
@@ -185,7 +185,7 @@
 
       resultDiv.innerHTML = "";
       funnyLine.innerText = "";
-      loading.innerText = "⏳ Hang tight...First time hit takes time usually as server is in sleep:) Waking up server...";
+      loading.innerText = "⏳ Hang tight...First attempt takes time usually as server is in sleep! Waking up server...";
 
       if (!dobInput) {
         alert("Pick your date and time of birth!");
