@@ -203,8 +203,14 @@ const msg1 = loadingMessages[Math.floor(Math.random() * loadingMessages.length)]
 const msg2 = secondMessages[Math.floor(Math.random() * secondMessages.length)];
 
 loading.innerText = msg1;
+
+const currentSessionId = Date.now(); // unique ID for this calculation
+loading.dataset.session = currentSessionId;
+
 setTimeout(() => {
-  loading.innerText = msg2;
+  if (loading.dataset.session == currentSessionId) {
+    loading.innerText = msg2;
+  }
 }, 2000);
 
       if (!dobInput) {
