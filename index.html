@@ -130,7 +130,6 @@
     const funnyLine = document.getElementById("funnyLine");
     const loading = document.getElementById("loading");
 
-    // Fetch available timezones for dropdown
     function populateTimezones() {
       const select = document.getElementById("timezoneSelect");
       const zones = Intl.supportedValuesOf('timeZone');
@@ -211,7 +210,32 @@
 
         function updateTimer() {
           const now = DateTime.now().setZone(timezone);
-          const diff = now.diff(birth, ['years', 'months', 'days', 'hours', 'minutes', 'seconds']).toObject();
+          const diffObj = now.diff(birth, ['years', 'months', 'days', 'hours', 'minutes', 'seconds']);
+          const diff = diffObj.toObject();
+
+          if (diffObj.value < 0) {
+            const futureDiff = birth.diff(now, ['days', 'hours', 'minutes', 'seconds']).toObject();
+
+            resultDiv.innerHTML = `
+              👽 You're not born yet! <br>
+              Arrival in:
+              <strong>${Math.floor(futureDiff.days || 0)}</strong> days, 
+              <strong>${Math.floor(futureDiff.hours || 0)}</strong> hours, 
+              <strong>${Math.floor(futureDiff.minutes || 0)}</strong> minutes, 
+              <strong>${Math.floor(futureDiff.seconds || 0)}</strong> seconds 🛸
+              <br><br>📍 Expected Timezone: <strong>${timezone}</strong>
+            `;
+
+            const notBornLines = [
+              "You still chilling in another dimension 👾",
+              "NASA tracking your arrival 🛰️",
+              "Hold tight, Earth is getting ready for ya! 🌍",
+              "Still waiting for the mothership to drop you off 👽🚀",
+              "You're in pre-Earth download mode 🧬"
+            ];
+            funnyLine.innerText = notBornLines[Math.floor(Math.random() * notBornLines.length)];
+            return;
+          }
 
           resultDiv.innerHTML = `
             ⌛ You’ve survived:<br>
@@ -259,7 +283,6 @@
       }
     }
 
-    // Initial ping + timezone dropdown setup
     window.addEventListener("DOMContentLoaded", () => {
       fetch("https://project-1-ifvd.onrender.com/api/ping").catch(() => {});
       populateTimezones();
