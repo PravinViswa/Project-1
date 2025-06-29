@@ -210,10 +210,8 @@
 
         function updateTimer() {
           const now = DateTime.now().setZone(timezone);
-          const diffObj = now.diff(birth, ['years', 'months', 'days', 'hours', 'minutes', 'seconds']);
-          const diff = diffObj.toObject();
 
-          if (diffObj.value < 0) {
+          if (birth > now) {
             const futureDiff = birth.diff(now, ['days', 'hours', 'minutes', 'seconds']).toObject();
 
             resultDiv.innerHTML = `
@@ -236,6 +234,8 @@
             funnyLine.innerText = notBornLines[Math.floor(Math.random() * notBornLines.length)];
             return;
           }
+
+          const diff = now.diff(birth, ['years', 'months', 'days', 'hours', 'minutes', 'seconds']).toObject();
 
           resultDiv.innerHTML = `
             ⌛ You’ve survived:<br>
